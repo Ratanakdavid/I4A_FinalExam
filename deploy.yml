@@ -1,7 +1,7 @@
 ---
 - name: Deploy and Backup Terrain Rentals
-  hosts: web_server_group
-  become: no
+  hosts: localhost
+  connection: local
   tasks:
     - name: Ensure backup directory exists
       ansible.builtin.file:
@@ -11,12 +11,12 @@
 
     - name: Backup MySQL database
       ansible.builtin.shell: 
-        cmd: docker-compose exec mysql-db bash -c "mysqldump -u ratanakdavid -p'Hello@123' A-Ratanakdavid-db > /var/lib/mysql/db_backup.sql"
+        cmd: docker-compose exec -T mysql-db bash -c "mysqldump -u ratanakdavid -p'Hello@123' A-Ratanakdavid-db > /var/lib/mysql/db_backup.sql"
       args:
         chdir: /var/jenkins_home/workspace/I4A_FInalExam/
 
     - name: Move backup to workspace
-      ansible.builtin.shell: docker compose cp mysql-db:/var/lib/mysql/db_backup.sql ./backups/db_backup.sql
+      ansible.builtin.shell: docker-compose cp mysql-db:/var/lib/mysql/db_backup.sql ./backups/db_backup.sql
       args:
         chdir: /var/jenkins_home/workspace/I4A_FInalExam/
 
@@ -27,6 +27,6 @@
         remote_src: no
 
     - name: Restart application container
-      ansible.builtin.shell: docker compose restart terrain-app
+      ansible.builtin.shell: docker-compose restart terrain-app
       args:
         chdir: /var/jenkins_home/workspace/I4A_FInalExam/

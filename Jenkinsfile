@@ -27,8 +27,9 @@ pipeline {
 
         stage('Build with Maven') {
             steps {
+                // Using absolute path for mvn to avoid "mvn not found"
                 sh """
-                    mvn clean package -DskipTests 2>&1 | tee -a "$BUILD_LOG"
+                    /usr/bin/mvn clean package -DskipTests 2>&1 | tee -a "$BUILD_LOG"
                 """
             }
         }
@@ -36,17 +37,16 @@ pipeline {
         stage('Test with SQLite Test Database') {
             steps {
                 sh """
-                    mvn clean test -Dspring.profiles.active=test 2>&1 | tee -a "$BUILD_LOG"
+                    /usr/bin/mvn clean test -Dspring.profiles.active=test 2>&1 | tee -a "$BUILD_LOG"
                 """
             }
         }
 
         stage('Deploy with Ansible') {
             steps {
-                // Ensure we use the hyphenated docker-compose command
                 sh """
                     echo "=== Running Ansible Playbook ===" | tee -a "$BUILD_LOG"
-                    ansible-playbook -i inventory.ini playbook.yml 2>&1 | tee -a "$BUILD_LOG"
+                    ansible-playbook -i inventory.ini deploy.yml 2>&1 | tee -a "$BUILD_LOG"
                 """
             }
         }
@@ -58,7 +58,16 @@ pipeline {
             junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
         }
         failure {
-            echo 'Build failed. Skipping email notification due to system SMTP configuration.'
+            script {
+                emailext (
+                    subject: "FAILED: Job ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                    body: """<p>The Jenkins build failed. Please check the logs below.</p>
+                             <p>Build URL: ${env.BUILD_URL}</p>
+                             <p>Check the attached build log for errors.</p>""",
+                    to: 'srengty@gmail.com',
+                    attachmentsPattern: 'jenkins-build-output.txt'
+                )
+            }
         }
     }
 }
