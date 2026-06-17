@@ -14,15 +14,15 @@
         docker compose exec mysql-db mysqldump -u ratanakdavid -p'Hello@123' 
         A-Ratanakdavid-db > /var/jenkins_home/workspace/I4A_FInalExam/backups/db_backup.sql
       args:
-        chdir: /home/ratanakdavid/Documents/terrain-rentals/
+        chdir: /var/jenkins_home/workspace/I4A_FInalExam/
 
     - name: Copy JAR to deployment folder
       ansible.builtin.copy:
         src: target/terrain-rentals-0.0.1-SNAPSHOT.jar
-        dest: /home/ratanakdavid/Documents/terrain-rentals/app.jar
+        dest: /var/jenkins_home/workspace/I4A_FInalExam/app.jar
         remote_src: no
 
     - name: Restart application container
       ansible.builtin.shell: docker compose restart terrain-app
       args:
-        chdir: /home/ratanakdavid/Documents/terrain-rentals/
+        chdir: /var/jenkins_home/workspace/I4A_FInalExam/
