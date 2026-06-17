@@ -20,12 +20,12 @@ pipeline {
         }
     }
     
-    post {
-        failure {
-            // Note: Ensure your Jenkins "System" email settings are configured
-            mail to: 'srengty@gmail.com',
-                 subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
-                 body: "Build or Deployment failed. Check the console output here: ${env.BUILD_URL}"
-        }
-    }
+    // post {
+    //     failure {
+    //         // Note: Ensure your Jenkins "System" email settings are configured
+    //         mail to: 'srengty@gmail.com',
+    //              subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
+    //              body: "Build or Deployment failed. Check the console output here: ${env.BUILD_URL}"
+    //     }
+    // }
 }
