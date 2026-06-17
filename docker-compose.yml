@@ -1,0 +1,16 @@
+services:
+  web-server:
+    image: eclipse-temurin:21-jdk-jammy
+    tty: true          
+    command: tail -f /dev/null  
+    ports:
+      - "8080:8080"
+  mysql-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: "A-Ratanakdavid-db"
+      MYSQL_ROOT_PASSWORD: "Hello@123"
+      MYSQL_USER: "ratanakdavid"
+      MYSQL_PASSWORD: "Hello@123"
+    ports:
+      - "3307:3306"
