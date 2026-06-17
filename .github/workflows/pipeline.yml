@@ -1,0 +1,45 @@
+name: CI/CD Pipeline
+
+on: [push]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build and Test with Maven
+        run: mvn clean package -DskipTests=false
+
+      - name: Run Ansible Playbook
+        run: |
+          # Install Ansible on the runner
+          sudo apt-get update
+          sudo apt-get install -y ansible
+          # Run the playbook
+          ansible-playbook -i inventory.ini deploy.yml
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: 'false'
+
+      - name: Notify on Failure
+        if: failure()
+        uses: dawiddr/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{secrets.MAIL_USERNAME}}
+          password: ${{secrets.MAIL_PASSWORD}}
+          subject: Build Failed - Commit ${{github.sha}}
+          body: |
+            Build failed for commit ${{github.sha}}. 
+            Developer: vidkh18@gmail.com
+            Please check the GitHub Actions logs for details.
+          to: srengty@gmail.com, vidkh18@gmail.com
+          from: GitHub Actions <noreply@github.com>
