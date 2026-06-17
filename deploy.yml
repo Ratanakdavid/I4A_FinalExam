@@ -1,31 +1,27 @@
+---
 - name: Deploy and Backup Terrain Rentals
   hosts: web_server_group
+  become: no  
   tasks:
-    - name: Fetch latest code and reset
-      ansible.builtin.shell: |
-        git reset --hard HEAD
-        git pull origin Exam
-      args:
-        chdir: /home/ratanakdavid/Documents/terrain-rentals/
-
-    - name: Build project with Maven
-      ansible.builtin.shell: ./mvnw clean package -DskipTests
-      args:
-        chdir: /home/ratanakdavid/Documents/terrain-rentals/
-
-    - name: Run tests with SQLite profile
-      ansible.builtin.shell: ./mvnw test -Dspring.profiles.active=test
-      args:
-        chdir: /home/ratanakdavid/Documents/terrain-rentals/
-      register: test_output
+    - name: Ensure backup directory exists
+      ansible.builtin.file:
+        path: /home/ratanakdavid/backups
+        state: directory
+        mode: '0755'
 
     - name: Backup MySQL database
       ansible.builtin.shell: >
         docker compose exec mysql-db mysqldump -u ratanakdavid -p'Hello@123' 
-        A-Ratanakdavid-db > backup.sql
+        A-Ratanakdavid-db > /home/ratanakdavid/backups/db_backup.sql
       args:
         chdir: /home/ratanakdavid/Documents/terrain-rentals/
 
-    - name: Show test results for screenshot
-      ansible.builtin.debug:
-        var: test_output.stdout_lines
+    - name: Copy JAR to deployment folder
+      ansible.builtin.copy:
+        src: target/terrain-rentals-0.0.1-SNAPSHOT.jar
+        dest: /home/ratanakdavid/Documents/terrain-rentals/app.jar
+
+    - name: Restart application container
+      ansible.builtin.shell: docker compose restart terrain-app
+      args:
+        chdir: /home/ratanakdavid/Documents/terrain-rentals/

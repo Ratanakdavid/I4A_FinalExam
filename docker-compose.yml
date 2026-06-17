@@ -1,8 +1,8 @@
 services:
   web-server:
     image: eclipse-temurin:21-jdk-jammy
-    tty: true          
-    command: tail -f /dev/null  
+    tty: true
+    command: tail -f /dev/null
     ports:
       - "8080:8080"
   mysql-db:
@@ -14,3 +14,13 @@ services:
       MYSQL_PASSWORD: "Hello@123"
     ports:
       - "3307:3306"
+  jenkins:
+    image: jenkins/jenkins:lts
+    ports:
+      - "8089:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+
+volumes:
+  jenkins_home:
