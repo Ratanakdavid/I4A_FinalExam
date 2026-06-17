@@ -1,28 +1,64 @@
 pipeline {
     agent any
-    
+
     triggers {
         pollSCM('H/5 * * * *')
     }
 
+    environment {
+        SPRING_PROFILES_ACTIVE = 'test'
+        BUILD_LOG = 'jenkins-build-output.txt'
+    }
+
+    options {
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
     stages {
-        stage('Build & Test') {
+        stage('Checkout') {
             steps {
-                sh './mvnw clean package -Dspring.profiles.active=test'
+                checkout scm
+                script {
+                    writeFile file: env.BUILD_LOG, text: "# Jenkins Build Output\n\nJob: ${env.JOB_NAME}\nBuild: #${env.BUILD_NUMBER}\nStarted: ${new Date()}\n\n"
+                }
             }
         }
-        stage('Deploy & Backup') {
+
+        stage('Build with Maven') {
             steps {
-                sh 'ansible-playbook -i inventory.ini deploy.yml'
+                sh """
+                    mvn clean package -DskipTests 2>&1 | tee -a "$BUILD_LOG"
+                """
+            }
+        }
+
+        stage('Test with SQLite Test Database') {
+            steps {
+                sh """
+                    mvn clean test -Dspring.profiles.active=test 2>&1 | tee -a "$BUILD_LOG"
+                """
+            }
+        }
+
+        stage('Deploy with Ansible') {
+            steps {
+                // Ensure we use the hyphenated docker-compose command
+                sh """
+                    echo "=== Running Ansible Playbook ===" | tee -a "$BUILD_LOG"
+                    ansible-playbook -i inventory.ini playbook.yml 2>&1 | tee -a "$BUILD_LOG"
+                """
             }
         }
     }
-    
+
     post {
+        always {
+            archiveArtifacts artifacts: 'jenkins-build-output.txt,target/*.jar,target/surefire-reports/*.xml', allowEmptyArchive: true
+            junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
+        }
         failure {
-            mail to: 'srengty@gmail.com',
-                 subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
-                 body: "Build or Deployment failed. Check the console output here: ${env.BUILD_URL}"
+            echo 'Build failed. Skipping email notification due to system SMTP configuration.'
         }
     }
 }
