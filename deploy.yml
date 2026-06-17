@@ -11,7 +11,7 @@
 
     - name: Backup MySQL database
       ansible.builtin.shell: 
-        cmd: docker compose exec mysql-db bash -c "mysqldump -u ratanakdavid -p'Hello@123' A-Ratanakdavid-db > /var/lib/mysql/db_backup.sql"
+        cmd: docker-compose exec mysql-db bash -c "mysqldump -u ratanakdavid -p'Hello@123' A-Ratanakdavid-db > /var/lib/mysql/db_backup.sql"
       args:
         chdir: /var/jenkins_home/workspace/I4A_FInalExam/
 
