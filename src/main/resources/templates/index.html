@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>Card Manager | Pro</title>
+</head>
+<body class="bg-gray-50 flex h-screen font-sans text-slate-800">
+    <aside class="w-64 bg-slate-950 text-slate-300 p-6">
+        <h2 class="text-white font-bold text-xl mb-10">Card Manager</h2>
+        <nav class="space-y-4"><a href="#" class="bg-indigo-600 text-white p-3 rounded-lg block">Dashboard</a></nav>
+    </aside>
+
+    <main class="flex-1 p-10">
+        <header class="flex justify-between mb-10">
+            <h1 class="text-3xl font-bold">Dashboard</h1>
+            <button onclick="document.getElementById('modal').classList.remove('hidden')" class="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold">New Profile</button>
+        </header>
+
+        <div class="grid grid-cols-3 gap-6 mb-10">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border">Total: <div id="total" class="text-4xl font-black">0</div></div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border">Students: <div id="students" class="text-4xl font-black text-indigo-600">0</div></div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border">Employees: <div id="employees" class="text-4xl font-black text-emerald-600">0</div></div>
+        </div>
+    </main>
+
+    <div id="modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-2xl w-96">
+            <h2 class="text-xl font-bold mb-4">Create Profile</h2>
+            <input id="fullName" type="text" placeholder="Full Name" class="w-full border p-2 mb-4 rounded">
+            <select id="profileType" class="w-full border p-2 mb-4 rounded">
+                <option value="STUDENT">STUDENT</option>
+                <option value="EMPLOYEE">EMPLOYEE</option>
+            </select>
+            <button onclick="saveProfile()" class="bg-indigo-600 text-white w-full py-2 rounded">Save</button>
+        </div>
+    </div>
+
+    <script>
+        async function loadStats() {
+            const res = await fetch('/api/profiles/stats');
+            const data = await res.json();
+            document.getElementById('total').innerText = data.total;
+            document.getElementById('students').innerText = data.students;
+            document.getElementById('employees').innerText = data.employees;
+        }
+        async function saveProfile() {
+            await fetch('/api/profiles', { method: 'POST', headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ fullName: document.getElementById('fullName').value, profileType: document.getElementById('profileType').value }) 
+            });
+            document.getElementById('modal').classList.add('hidden');
+            loadStats();
+        }
+        loadStats();
+    </script>
+</body>
+</html>
